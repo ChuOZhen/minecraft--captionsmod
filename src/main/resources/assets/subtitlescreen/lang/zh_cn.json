@@ -1,0 +1,9 @@
+{
+  "block.subtitlescreen.subtitle_block": "字幕方块",
+  "item.subtitlescreen.subtitle_block": "字幕方块",
+  "itemGroup.subtitlescreen.subtitle_group": "字幕方块",
+  "screen.subtitlescreen.subtitle_screen": "字幕方块设置",
+  "subtitlescreen.message.no_permission": "你没有权限使用字幕方块！",
+  "subtitlescreen.message.chunk_forced": "已强制加载当前区块，以保证字幕功能正常运行。",
+  "subtitlescreen.message.chunk_unforced": "已移除区块强制加载。"
+}

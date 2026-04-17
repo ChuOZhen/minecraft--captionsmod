@@ -1,0 +1,9 @@
+{
+  "block.subtitlescreen.subtitle_block": "Subtitle Block",
+  "item.subtitlescreen.subtitle_block": "Subtitle Block",
+  "itemGroup.subtitlescreen.subtitle_group": "Subtitle Blocks",
+  "screen.subtitlescreen.subtitle_screen": "Subtitle Block Settings",
+  "subtitlescreen.message.no_permission": "You do not have permission to use subtitle blocks.",
+  "subtitlescreen.message.chunk_forced": "The current chunk is now force loaded so subtitles can keep working.",
+  "subtitlescreen.message.chunk_unforced": "The chunk is no longer force loaded."
+}

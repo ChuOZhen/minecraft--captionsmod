@@ -1,0 +1,84 @@
+plugins {
+    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'maven-publish'
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.fabricmc.net/' }
+    maven { url 'https://libraries.minecraft.net/' }
+    maven { url 'https://repo.maven.apache.org/maven2/' }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${project.minecraft_version}"
+    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
+    modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+}
+
+tasks.register("runSubtitleRenderStateTest", JavaExec) {
+    group = "verification"
+    description = "Runs lightweight render state assertions."
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = "com.subtitlescreen.render.SubtitleRenderStateTest"
+}
+
+tasks.register("runSubtitleJoinSchedulerTest", JavaExec) {
+    group = "verification"
+    description = "Runs delayed join trigger scheduler assertions."
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = "com.subtitlescreen.trigger.SubtitleJoinSchedulerTest"
+}
+
+check.dependsOn tasks.named("runSubtitleRenderStateTest")
+check.dependsOn tasks.named("runSubtitleJoinSchedulerTest")
+
+processResources {
+    inputs.property "version", project.version
+    filteringCharset "UTF-8"
+
+    filesMatching("fabric.mod.json") {
+        expand "version": project.version
+    }
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withSourcesJar()
+}
+
+jar {
+    from("LICENSE") {
+        rename { "${it}_${project.base.archivesName.get()}"}
+    }
+}
+
+publishing {
+    publications {
+        create("mavenJava", MavenPublication) {
+            artifactId = project.archives_base_name
+            from components.java
+        }
+    }
+}
+
+loom {
+    runs {
+        client {
+            runDir "run"
+        }
+        server {
+            runDir "run"
+        }
+    }
+}

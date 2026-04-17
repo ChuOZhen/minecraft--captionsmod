@@ -1,0 +1,13 @@
+.gradle/
+.gradle-home/
+build/
+run/
+out/
+*.class
+*.jar
+*.zip
+.DS_Store
+.idea/
+*.iml
+command.md
+plan.md

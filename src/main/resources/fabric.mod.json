@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "subtitlescreen",
+  "version": "${version}",
+  "name": "字幕方块",
+  "description": "一个可以在大屏上显示字幕的方块模组",
+  "authors": [
+    "SubTitleScreen Team"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.subtitlescreen.SubtitleScreenMod"
+    ],
+    "client": [
+      "com.subtitlescreen.SubtitleScreenModClient"
+    ]
+  },
+  "mixins": [
+    "subtitlescreen.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.15.11",
+    "fabric-api": ">=0.110.0+1.21.1",
+    "minecraft": "1.21.1",
+    "java": ">=21"
+  }
+}
