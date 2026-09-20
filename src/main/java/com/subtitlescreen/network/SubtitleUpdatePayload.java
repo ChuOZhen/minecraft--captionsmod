@@ -10,10 +10,10 @@ import net.minecraft.core.BlockPos;
 public record SubtitleUpdatePayload(BlockPos pos, String subtitleText, String fontType, String triggerMode,
                                     int duration, String textColorHex, String playerNameColorHex)
         implements CustomPacketPayload {
-    public static final CustomPacketPayload.Id<SubtitleUpdatePayload> ID =
-            new CustomPacketPayload.Id<>(SubtitleScreenMod.id("subtitle_update"));
+    public static final CustomPacketPayload.Type<SubtitleUpdatePayload> ID =
+            new CustomPacketPayload.Type<>(SubtitleScreenMod.id("subtitle_update"));
     public static final StreamCodec<RegistryFriendlyByteBuf, SubtitleUpdatePayload> CODEC =
-            CustomPacketPayload.codecOf(SubtitleUpdatePayload::write, SubtitleUpdatePayload::read);
+            StreamCodec.of(SubtitleUpdatePayload::write, SubtitleUpdatePayload::read);
 
     public void write(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
@@ -38,7 +38,7 @@ public record SubtitleUpdatePayload(BlockPos pos, String subtitleText, String fo
     }
 
     @Override
-    public CustomPacketPayload.Id<? extends CustomPacketPayload> getId() {
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> getId() {
         return ID;
     }
 }

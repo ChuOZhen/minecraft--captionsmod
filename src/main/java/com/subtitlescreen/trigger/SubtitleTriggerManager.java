@@ -1,12 +1,12 @@
 package com.subtitlescreen.trigger;
 
 import com.subtitlescreen.block.entity.SubtitleBlockEntity;
-import net.minecraft.level.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.level.level.ChunkPos;
-import net.minecraft.level.level.chunk.LevelChunk;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
 
 public final class SubtitleTriggerManager {
     private static final int JOIN_TRIGGER_DELAY_TICKS = 40;
@@ -29,7 +29,7 @@ public final class SubtitleTriggerManager {
     }
 
     public static void triggerJoinSubtitles(ServerPlayer player) {
-        ServerLevel world = player.getServerWorld();
+        ServerLevel world = player.serverLevel();
 
         for (long packedChunkPos : world.getForcedChunks()) {
             LevelChunk chunk = world.getChunk(ChunkPos.getPackedX(packedChunkPos), ChunkPos.getPackedZ(packedChunkPos));

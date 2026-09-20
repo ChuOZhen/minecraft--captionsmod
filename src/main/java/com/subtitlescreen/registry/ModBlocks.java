@@ -2,11 +2,11 @@ package com.subtitlescreen.registry;
 
 import com.subtitlescreen.SubtitleScreenMod;
 import com.subtitlescreen.block.SubtitleBlock;
-import net.minecraft.level.level.block.state.BlockBehaviour;
-import net.minecraft.level.level.block.Blocks;
-import net.minecraft.level.level.material.PushReaction;
-import net.minecraft.level.item.BlockItem;
-import net.minecraft.level.item.Item;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.PushReaction;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Registry;
 

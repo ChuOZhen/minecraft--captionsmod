@@ -3,7 +3,7 @@ package com.subtitlescreen.registry;
 import com.subtitlescreen.SubtitleScreenMod;
 import com.subtitlescreen.block.entity.SubtitleBlockEntity;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
-import net.minecraft.level.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Registry;
 

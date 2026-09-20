@@ -6,7 +6,7 @@ import com.subtitlescreen.screen.SubtitleScreenOpeningData;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuType;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Registry;
-import net.minecraft.level.inventory.MenuType;
+import net.minecraft.world.inventory.MenuType;
 
 public final class ModScreenHandlers {
     public static final MenuType<SubtitleScreenHandler> SUBTITLE_SCREEN_HANDLER =

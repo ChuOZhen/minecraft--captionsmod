@@ -10,7 +10,7 @@ import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.level.entity.player.Inventory;
+import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.network.chat.Component;
 import net.minecraft.core.BlockPos;
 
@@ -53,7 +53,7 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
     private String playerNameColorHex = "00FF00";
     private SubtitleBlockEntity blockEntity;
 
-    public SubtitleScreen(SubtitleScreenHandler handler, Inventory inventory, Text title) {
+    public SubtitleScreen(SubtitleScreenHandler handler, Inventory inventory, Component title) {
         super(handler, inventory, title);
         this.imageWidth = 340;
         this.imageHeight = 292;
@@ -119,8 +119,8 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
     }
 
     private void loadBlockEntity() {
-        if (client != null && client.level != null && handler.getPos() != null
-                && client.level.getBlockEntity(handler.getPos()) instanceof SubtitleBlockEntity entity) {
+        if (client != null && client.level != null && handler.getBlockPos() != null
+                && client.level.getBlockEntity(handler.getBlockPos()) instanceof SubtitleBlockEntity entity) {
             this.blockEntity = entity;
         }
     }
@@ -161,11 +161,11 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
     }
 
     private void saveSettings() {
-        if (client == null || client.getNetworkHandler() == null || handler.getPos() == null) {
+        if (client == null || client.getNetworkHandler() == null || handler.getBlockPos() == null) {
             return;
         }
 
-        BlockPos pos = handler.getPos();
+        BlockPos pos = handler.getBlockPos();
         ClientPlayNetworking.send(new SubtitleUpdatePayload(
                 pos,
                 collectSubtitleText(),

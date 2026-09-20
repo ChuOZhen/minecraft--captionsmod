@@ -5,34 +5,34 @@ import com.subtitlescreen.block.entity.SubtitleBlockEntity;
 import com.subtitlescreen.screen.SubtitleScreenHandler;
 import com.subtitlescreen.screen.SubtitleScreenOpeningData;
 import net.fabricmc.fabric.api.menu.v1.ExtendedMenuProvider;
-import net.minecraft.level.level.block.Block;
-import net.minecraft.level.level.block.BaseEntityBlock;
-import net.minecraft.level.level.block.Blocks;
-import net.minecraft.level.level.block.EntityBlock;
-import net.minecraft.level.level.block.RenderShape;
-import net.minecraft.level.level.block.state.BlockState;
-import net.minecraft.level.level.block.state.BlockBehaviour;
-import net.minecraft.level.level.block.entity.BlockEntity;
-import net.minecraft.level.level.block.entity.BlockEntityTicker;
-import net.minecraft.level.level.block.entity.BlockEntityType;
-import net.minecraft.level.entity.LivingEntity;
-import net.minecraft.level.entity.player.Player;
-import net.minecraft.level.item.ItemStack;
-import net.minecraft.level.MenuProvider;
-import net.minecraft.level.inventory.ContainerLevelAccess;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.MenuProvider;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.chat.Component;
-import net.minecraft.level.InteractionResult;
-import net.minecraft.level.phys.BlockHitResult;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.core.BlockPos;
-import net.minecraft.level.level.ChunkPos;
-import net.minecraft.level.level.Level;
-import net.minecraft.level.level.chunk.LevelChunk;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.chunk.LevelChunk;
 import org.jetbrains.annotations.Nullable;
 
 public class SubtitleBlock extends BaseEntityBlock {
-    public static final MapCodec<SubtitleBlock> CODEC = createCodec(SubtitleBlock::new);
+    public static final MapCodec<SubtitleBlock> CODEC = simpleCodec(SubtitleBlock::new);
     private static final long REDSTONE_COOLDOWN_TICKS = 5L;
 	    
     public SubtitleBlock(Settings settings) {
@@ -51,7 +51,7 @@ public class SubtitleBlock extends BaseEntityBlock {
 
     @Override
     protected InteractionResult onUse(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-        if (!world.isClient) {
+        if (!world.isClientSide) {
             if (canConfigure(player, world)) {
                 MenuProvider screenHandlerFactory = createScreenHandlerFactory(world, pos);
                 player.openMenu(screenHandlerFactory);
@@ -87,7 +87,7 @@ public class SubtitleBlock extends BaseEntityBlock {
     @Override
     protected void neighborUpdate(BlockState state, Level world, BlockPos pos, Block sourceBlock, BlockPos sourcePos,
                                   boolean notify) {
-        super.neighborUpdate(state, world, pos, sourceBlock, sourcePos, notify);
+        super.neighborChanged(state, world, pos, sourceBlock, sourcePos, notify);
 
         if (world instanceof ServerLevel serverWorld
                 && serverWorld.getBlockEntity(pos) instanceof SubtitleBlockEntity blockEntity) {
@@ -97,7 +97,7 @@ public class SubtitleBlock extends BaseEntityBlock {
 
     @Override
     public void onStateReplaced(BlockState state, Level world, BlockPos pos, BlockState newState, boolean moved) {
-        if (!world.isClient && world instanceof ServerLevel serverWorld && state.getBlock() != newState.getBlock()) {
+        if (!world.isClientSide && world instanceof ServerLevel serverWorld && state.getBlock() != newState.getBlock()) {
             ChunkPos chunkPos = new ChunkPos(pos);
             if (!hasOtherSubtitleBlockInChunk(serverWorld, pos)) {
                 serverWorld.setChunkForced(chunkPos.x, chunkPos.z, false);
@@ -108,7 +108,7 @@ public class SubtitleBlock extends BaseEntityBlock {
                 }
             }
         }
-        super.onStateReplaced(state, world, pos, newState, moved);
+        super.onRemove(state, world, pos, newState, moved);
     }
 
     @Override
@@ -139,12 +139,12 @@ public class SubtitleBlock extends BaseEntityBlock {
             }
 
             @Override
-            public Text getDisplayName() {
+            public Component getDisplayName() {
                 return Component.translatable("screen.subtitlescreen.subtitle_screen");
             }
 
             @Override
-            public SubtitleScreenHandler createMenu(int syncId, net.minecraft.level.entity.player.Inventory inventory,
+            public SubtitleScreenHandler createMenu(int syncId, net.minecraft.world.entity.player.Inventory inventory,
                                                     Player player) {
                 return new SubtitleScreenHandler(syncId, inventory, ContainerLevelAccess.create(world, pos), pos);
             }
@@ -171,7 +171,7 @@ public class SubtitleBlock extends BaseEntityBlock {
             return;
         }
 
-        long currentTime = world.getTime();
+        long currentTime = world.getGameTime();
         if (currentTime - blockEntity.getLastTriggerGameTime() < REDSTONE_COOLDOWN_TICKS) {
             return;
         }
@@ -184,7 +184,7 @@ public class SubtitleBlock extends BaseEntityBlock {
         LevelChunk chunk = world.getWorldChunk(excludedPos);
 
         for (BlockEntity blockEntity : chunk.getBlockEntities().values()) {
-            if (blockEntity instanceof SubtitleBlockEntity && !blockEntity.getPos().equals(excludedPos)) {
+            if (blockEntity instanceof SubtitleBlockEntity && !blockEntity.getBlockPos().equals(excludedPos)) {
                 return true;
             }
         }

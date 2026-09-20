@@ -2,11 +2,11 @@ package com.subtitlescreen.screen;
 
 import com.subtitlescreen.registry.ModBlocks;
 import com.subtitlescreen.registry.ModScreenHandlers;
-import net.minecraft.level.entity.player.Player;
-import net.minecraft.level.entity.player.Inventory;
-import net.minecraft.level.item.ItemStack;
-import net.minecraft.level.inventory.AbstractContainerMenu;
-import net.minecraft.level.inventory.ContainerLevelAccess;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ContainerLevelAccess;
 import net.minecraft.core.BlockPos;
 import org.jetbrains.annotations.Nullable;
 

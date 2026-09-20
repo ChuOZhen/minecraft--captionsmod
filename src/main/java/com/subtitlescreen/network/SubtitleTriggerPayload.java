@@ -8,10 +8,10 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 public record SubtitleTriggerPayload(String text, String fontType, int duration, String textColorHex,
                                      String playerNameColorHex) implements CustomPacketPayload {
-    public static final CustomPacketPayload.Id<SubtitleTriggerPayload> ID =
-            new CustomPacketPayload.Id<>(SubtitleScreenMod.id("subtitle_trigger"));
+    public static final CustomPacketPayload.Type<SubtitleTriggerPayload> ID =
+            new CustomPacketPayload.Type<>(SubtitleScreenMod.id("subtitle_trigger"));
     public static final StreamCodec<RegistryFriendlyByteBuf, SubtitleTriggerPayload> CODEC =
-            CustomPacketPayload.codecOf(SubtitleTriggerPayload::write, SubtitleTriggerPayload::read);
+            StreamCodec.of(SubtitleTriggerPayload::write, SubtitleTriggerPayload::read);
 
     public void write(RegistryFriendlyByteBuf buf) {
         buf.writeUtf(text);
@@ -32,7 +32,7 @@ public record SubtitleTriggerPayload(String text, String fontType, int duration,
     }
 
     @Override
-    public CustomPacketPayload.Id<? extends CustomPacketPayload> getId() {
+    public CustomPacketPayload.Type<? extends CustomPacketPayload> getId() {
         return ID;
     }
 }

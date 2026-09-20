@@ -23,7 +23,7 @@ public final class ModPayloads {
 
         ServerPlayNetworking.registerGlobalReceiver(SubtitleUpdatePayload.ID, (payload, context) -> {
             var player = context.player();
-            var world = player.getLevel();
+            var world = player.level();
             var pos = payload.pos();
 
             if (world.getBlockEntity(pos) instanceof SubtitleBlockEntity blockEntity
@@ -51,7 +51,7 @@ public final class ModPayloads {
     }
 
     private static boolean canConfigure(ServerPlayer player) {
-        ServerLevel world = player.getServerWorld();
+        ServerLevel world = player.serverLevel();
         return player.hasPermissionLevel(2) || !world.getServer().isDedicatedServer();
     }
 
