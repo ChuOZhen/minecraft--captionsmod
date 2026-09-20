@@ -1,16 +1,19 @@
 package com.subtitlescreen.registry;
 
 import com.subtitlescreen.block.entity.SubtitleBlockEntity;
+import com.subtitlescreen.network.SubtitleOpenScreenPayload;
 import com.subtitlescreen.network.SubtitleTriggerPayload;
 import com.subtitlescreen.network.SubtitleUpdatePayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Locale;
 
 public final class ModPayloads {
+
     private static final int MIN_DURATION_TICKS = 20;
     private static final int MAX_DURATION_TICKS = 200;
 
@@ -18,26 +21,29 @@ public final class ModPayloads {
     }
 
     public static void register() {
-        PayloadTypeRegistry.playC2S().register(SubtitleUpdatePayload.ID, SubtitleUpdatePayload.CODEC);
-        PayloadTypeRegistry.playS2C().register(SubtitleTriggerPayload.ID, SubtitleTriggerPayload.CODEC);
+        // 26.3 的 Fabric 把 playC2S()/playS2C() 改名为 serverboundPlay()/clientboundPlay()
+        PayloadTypeRegistry.serverboundPlay().register(SubtitleUpdatePayload.TYPE, SubtitleUpdatePayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(SubtitleTriggerPayload.TYPE, SubtitleTriggerPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(SubtitleOpenScreenPayload.TYPE, SubtitleOpenScreenPayload.CODEC);
 
-        ServerPlayNetworking.registerGlobalReceiver(SubtitleUpdatePayload.ID, (payload, context) -> {
-            var player = context.player();
-            var world = player.level();
-            var pos = payload.pos();
+        ServerPlayNetworking.registerGlobalReceiver(SubtitleUpdatePayload.TYPE, (payload, context) -> {
+            ServerPlayer player = context.player();
+            ServerLevel level = (ServerLevel) player.level();
+            BlockPos pos = payload.pos();
 
-            if (world.getBlockEntity(pos) instanceof SubtitleBlockEntity blockEntity
+            if (level.getBlockEntity(pos) instanceof SubtitleBlockEntity blockEntity
                     && canConfigure(player)
-                    && world.getBlockState(pos).isOf(ModBlocks.SUBTITLE_BLOCK)) {
+                    && level.getBlockState(pos).is(ModBlocks.SUBTITLE_BLOCK)) {
                 blockEntity.updateFromPayload(sanitize(payload));
-                world.updateListeners(pos, world.getBlockState(pos), world.getBlockState(pos), 3);
+                level.sendBlockUpdated(pos, level.getBlockState(pos), level.getBlockState(pos), 3);
             }
         });
     }
 
+    /** 服务端 -> 客户端：显示字幕。 */
     public static void sendSubtitle(ServerPlayer player, String text, String fontType, int duration,
                                     String textColorHex, String playerNameColorHex) {
-        if (!ServerPlayNetworking.canSend(player, SubtitleTriggerPayload.ID)) {
+        if (!ServerPlayNetworking.canSend(player, SubtitleTriggerPayload.TYPE)) {
             return;
         }
 
@@ -50,9 +56,18 @@ public final class ModPayloads {
         ));
     }
 
+    /** 服务端 -> 客户端：请求打开该方块的设置界面。 */
+    public static void sendOpenScreen(ServerPlayer player, BlockPos pos) {
+        if (!ServerPlayNetworking.canSend(player, SubtitleOpenScreenPayload.TYPE)) {
+            return;
+        }
+
+        ServerPlayNetworking.send(player, new SubtitleOpenScreenPayload(pos));
+    }
+
     private static boolean canConfigure(ServerPlayer player) {
-        ServerLevel world = player.serverLevel();
-        return player.hasPermissionLevel(2) || !world.getServer().isDedicatedServer();
+        return player.permissions().hasPermission(net.minecraft.server.permissions.Permissions.COMMANDS_GAMEMASTER)
+                || !player.level().getServer().isDedicatedServer();
     }
 
     private static SubtitleUpdatePayload sanitize(SubtitleUpdatePayload payload) {

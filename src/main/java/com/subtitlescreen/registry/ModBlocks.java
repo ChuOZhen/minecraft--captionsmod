@@ -11,11 +11,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.Registry;
 
 public final class ModBlocks {
-    public static final SubtitleBlock SUBTITLE_BLOCK = new SubtitleBlock(BlockBehaviour.Settings.copy(Blocks.STONE)
+    public static final SubtitleBlock SUBTITLE_BLOCK = new SubtitleBlock(BlockBehaviour.Properties.ofFullCopy(Blocks.STONE)
             .strength(3.0f, 6.0f)
-            .requiresTool()
-            .nonOpaque()
-            .pistonBehavior(PushReaction.BLOCK));
+            .requiresCorrectToolForDrops()
+            .noOcclusion()
+            .pushReaction(PushReaction.IMMOVEABLE));
 
     private ModBlocks() {
     }

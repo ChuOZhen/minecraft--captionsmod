@@ -6,17 +6,27 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.world.entity.player.Inventory;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 
+/**
+ * 字幕方块设置界面。
+ *
+ * <p>初版继承 AbstractContainerScreen（依赖 ScreenHandler/MenuType 注册）。26.3 把
+ * MenuScreens.register 改成了 private，模组无法再注册菜单界面，因此改为普通 Screen：
+ * 由服务端在权限校验后发 SubtitleOpenScreenPayload，客户端打开本界面；
+ * 保存时通过 SubtitleUpdatePayload 把数据发回服务端。</p>
+ */
 @Environment(EnvType.CLIENT)
-public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandler> {
+public class SubtitleScreen extends Screen {
+
     private static final int TEXT_LINE_COUNT = 4;
+    private static final int GUI_WIDTH = 340;
+    private static final int GUI_HEIGHT = 292;
 
     private static final String[] FONT_IDS = {"微软雅黑", "宋体", "楷体"};
     private static final String[] FONT_LABELS = {"微软雅黑", "宋体", "楷体"};
@@ -41,6 +51,7 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
             new ColorOption("棕", "8B4513")
     };
 
+    private final BlockPos pos;
     private final EditBox[] subtitleFields = new EditBox[TEXT_LINE_COUNT];
     private Button fontButton;
     private Button triggerButton;
@@ -53,10 +64,17 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
     private String playerNameColorHex = "00FF00";
     private SubtitleBlockEntity blockEntity;
 
-    public SubtitleScreen(SubtitleScreenHandler handler, Inventory inventory, Component title) {
-        super(handler, inventory, title);
-        this.imageWidth = 340;
-        this.imageHeight = 292;
+    public SubtitleScreen(BlockPos pos) {
+        super(Component.translatable("screen.subtitlescreen.subtitle_screen"));
+        this.pos = pos;
+    }
+
+    private int left() {
+        return this.width / 2 - GUI_WIDTH / 2 + 10;
+    }
+
+    private int top() {
+        return this.height / 2 - GUI_HEIGHT / 2;
     }
 
     @Override
@@ -65,62 +83,63 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
         loadBlockEntity();
         loadCurrentSettings();
 
-        int left = this.width / 2 - 160;
-        int top = this.height / 2 - this.imageHeight / 2;
-        int fullWidth = 320;
+        int left = left();
+        int top = top();
 
+        // 26.3：addDrawableChild -> addRenderableWidget；EditBox 用 setValue/getValue
         for (int i = 0; i < TEXT_LINE_COUNT; i++) {
-            EditBox field = new EditBox(textRenderer, left, top + 20 + i * 22, fullWidth, 20,
+            EditBox field = new EditBox(this.font, left, top + 20 + i * 22, 320, 20,
                     Component.literal("字幕内容 " + (i + 1)));
             field.setMaxLength(256);
             subtitleFields[i] = field;
-            addDrawableChild(field);
+            addRenderableWidget(field);
         }
 
         if (blockEntity != null) {
             String[] lines = blockEntity.getSubtitleText().split("\\R", -1);
             for (int i = 0; i < subtitleFields.length && i < lines.length; i++) {
-                subtitleFields[i].setMessage(lines[i]);
+                subtitleFields[i].setValue(lines[i]);
             }
         }
 
+        // 26.3：Button.Builder.dimensions(x,y,w,h) -> bounds(x,y,w,h)
         fontButton = Button.builder(Component.empty(), button -> {
             currentFontIndex = (currentFontIndex + 1) % FONT_IDS.length;
             updateFontButton();
-        }).dimensions(left, top + 113, 150, 20).build();
+        }).bounds(left, top + 113, 150, 20).build();
         updateFontButton();
-        addDrawableChild(fontButton);
+        addRenderableWidget(fontButton);
 
         triggerButton = Button.builder(Component.empty(), button -> {
             currentTriggerIndex = (currentTriggerIndex + 1) % TRIGGER_IDS.length;
             updateTriggerButton();
-        }).dimensions(left + 170, top + 113, 150, 20).build();
+        }).bounds(left + 170, top + 113, 150, 20).build();
         updateTriggerButton();
-        addDrawableChild(triggerButton);
+        addRenderableWidget(triggerButton);
 
         durationSlider = new DurationSliderWidget(left, top + 140, 240, 20, durationSeconds);
-        addDrawableChild(durationSlider);
+        addRenderableWidget(durationSlider);
 
         addColorButtons(left, top + 170, false);
         addColorButtons(left, top + 218, true);
 
-        addDrawableChild(Button.builder(Component.literal("彩虹文本"), button -> textColorHex = "rainbow")
-                .dimensions(left + 248, top + 140, 72, 20)
+        addRenderableWidget(Button.builder(Component.literal("彩虹文本"), button -> textColorHex = "rainbow")
+                .bounds(left + 248, top + 140, 72, 20)
                 .build());
 
-        addDrawableChild(Button.builder(Component.literal("保存"), button -> {
+        addRenderableWidget(Button.builder(Component.literal("保存"), button -> {
             saveSettings();
-            close();
-        }).dimensions(left + 116, top + 264, 96, 20).build());
+            onClose();
+        }).bounds(left + 116, top + 264, 96, 20).build());
 
-        addDrawableChild(Button.builder(Component.literal("取消"), button -> close())
-                .dimensions(left + 224, top + 264, 96, 20)
+        addRenderableWidget(Button.builder(Component.literal("取消"), button -> onClose())
+                .bounds(left + 224, top + 264, 96, 20)
                 .build());
     }
 
     private void loadBlockEntity() {
-        if (client != null && client.level != null && handler.getBlockPos() != null
-                && client.level.getBlockEntity(handler.getBlockPos()) instanceof SubtitleBlockEntity entity) {
+        if (this.minecraft != null && this.minecraft.level != null
+                && this.minecraft.level.getBlockEntity(pos) instanceof SubtitleBlockEntity entity) {
             this.blockEntity = entity;
         }
     }
@@ -142,13 +161,13 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
             ColorOption option = COLOR_OPTIONS[i];
             int buttonX = left + (i % 8) * 40;
             int buttonY = y + (i / 8) * 20;
-            addDrawableChild(Button.builder(Component.literal(option.label()), button -> {
+            addRenderableWidget(Button.builder(Component.literal(option.label()), button -> {
                 if (playerNameColor) {
                     playerNameColorHex = option.hex();
                 } else {
                     textColorHex = option.hex();
                 }
-            }).dimensions(buttonX, buttonY, 38, 18).build());
+            }).bounds(buttonX, buttonY, 38, 18).build());
         }
     }
 
@@ -161,11 +180,10 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
     }
 
     private void saveSettings() {
-        if (client == null || client.getNetworkHandler() == null || handler.getBlockPos() == null) {
+        if (this.minecraft == null || this.minecraft.getConnection() == null) {
             return;
         }
 
-        BlockPos pos = handler.getBlockPos();
         ClientPlayNetworking.send(new SubtitleUpdatePayload(
                 pos,
                 collectSubtitleText(),
@@ -181,7 +199,7 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
         StringBuilder builder = new StringBuilder();
 
         for (EditBox field : subtitleFields) {
-            String line = field.getText();
+            String line = field.getValue();
             if (!line.isEmpty() || builder.length() > 0) {
                 if (builder.length() > 0) {
                     builder.append('\n');
@@ -191,32 +209,6 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
         }
 
         return builder.isEmpty() ? "" : builder.toString();
-    }
-
-    @Override
-    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
-        renderBackground(context, mouseX, mouseY, delta);
-        super.render(context, mouseX, mouseY, delta);
-
-        int left = this.width / 2 - 160;
-        int top = this.height / 2 - this.imageHeight / 2;
-
-        context.drawCenteredTextWithShadow(textRenderer, Component.literal("字幕方块设置"), width / 2, top + 4, 0xFFFFFF);
-        context.drawTextWithShadow(textRenderer, Component.literal("字幕内容"), left, top + 9, 0xFFFFFF);
-        context.drawTextWithShadow(textRenderer, Component.literal("普通文本颜色: " + colorLabelFor(textColorHex)), left, top + 160, 0xFFFFFF);
-        context.drawTextWithShadow(textRenderer, Component.literal("玩家名颜色: " + colorLabelFor(playerNameColorHex)), left, top + 208, 0xFFFFFF);
-    }
-
-    @Override
-    public boolean shouldPause() {
-        return false;
-    }
-
-    @Override
-    protected void drawBackground(GuiGraphicsExtractor context, float delta, int mouseX, int mouseY) {
-        int left = this.width / 2 - this.imageWidth / 2;
-        int top = this.height / 2 - this.imageHeight / 2;
-        context.fill(left, top, left + this.imageWidth, top + this.imageHeight, 0xC0101010);
     }
 
     private static int findIndex(String[] values, String value, int fallback) {
@@ -255,6 +247,29 @@ public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandle
     }
 
     private record ColorOption(String label, String hex) {
+    }
+
+    // ------------------------------------------------------------------
+    // 26.3：Screen.render(...) 改为 extractRenderState(GuiGraphicsExtractor, int, int, float)
+    // ------------------------------------------------------------------
+    @Override
+    public void extractRenderState(GuiGraphicsExtractor extractor, int mouseX, int mouseY, float delta) {
+        super.extractRenderState(extractor, mouseX, mouseY, delta);
+
+        int left = left();
+        int top = top();
+
+        extractor.centeredText(this.font, Component.literal("字幕方块设置"), this.width / 2, top + 4, 0xFFFFFF);
+        extractor.text(this.font, Component.literal("字幕内容"), left, top + 9, 0xFFFFFF);
+        extractor.text(this.font, Component.literal("普通文本颜色: " + colorLabelFor(textColorHex)),
+                left, top + 160, 0xFFFFFF);
+        extractor.text(this.font, Component.literal("玩家名颜色: " + colorLabelFor(playerNameColorHex)),
+                left, top + 208, 0xFFFFFF);
+    }
+
+    @Override
+    public boolean isPauseScreen() {
+        return false;
     }
 
     private class DurationSliderWidget extends AbstractSliderButton {

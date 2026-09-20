@@ -100,3 +100,13 @@ loom {
 tasks.matching { it.name == 'remapSourcesJar' }.configureEach {
     enabled = false
 }
+
+// ---------------------------------------------------------------------------
+// 本项目的测试是自定义 JavaExec 任务（runSubtitleRenderStateTest /
+// runSubtitleJoinSchedulerTest），src/test/java 下是带 main 方法的独立类而非 JUnit 测试。
+// Gradle 默认的 test 任务会尝试把它们当测试执行并失败，因此关闭它；
+// 两个自定义测试任务仍然挂在 check 上，构建时会照常运行。
+// ---------------------------------------------------------------------------
+tasks.named('test') {
+    enabled = false
+}
