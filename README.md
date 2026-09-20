@@ -93,6 +93,7 @@
 |---|---|---|
 | **HUD 渲染** | `HudRenderCallback` + `DrawContext.drawText…` | `HudElementRegistry.addLast(id, HudElement)`；`HudElement#extractRenderState(GuiGraphicsExtractor, DeltaTracker)`；文字用 `extractor.text(font,…)` / `centeredText(…)`；变换用 `extractor.pose()`（`Matrix3x2fStack`）；尺寸用 `extractor.guiWidth()/guiHeight()` |
 | **菜单界面** | `ScreenHandler` + `ScreenHandlerType` + `MenuScreens.register` | `MenuScreens.register` 已是 **private**，改为：服务端发 `SubtitleOpenScreenPayload` → 客户端 `Minecraft.setScreenAndShow(new SubtitleScreen(pos))`（`setScreen` 也改名为 `setScreenAndShow`） |
+| **方块/物品属性** | `AbstractBlock.Settings.copy(...)` | **必须在 `Properties` 上 `setId(ResourceKey)`**：否则构造方块时抛 `NullPointerException: Block id not set`（`BlockBehaviour$Properties.effectiveDrops`）。注意 `ofFullCopy` 会把原方块的 id 一起复制过来，必须覆盖 |
 | **方块** | `Block.onUse/createBlockEntity/onBlockAdded/onStateReplaced/getRenderType` | 都在 `BlockBehaviour`：`useWithoutItem`、`EntityBlock.newBlockEntity`、`onPlace`、`affectNeighborsAfterRemoval`、`getRenderShape`；`neighborChanged` **多一个 `Orientation` 参数** |
 | **方块实体** | `writeNbt/readNbt(CompoundTag, HolderLookup)` | `saveAdditional(ValueOutput)` / `loadAdditional(ValueInput)`；`markDirty` → `setChanged` |
 | **权限** | `player.hasPermissionLevel(2)` | `player.permissions().hasPermission(Permissions.COMMANDS_GAMEMASTER)` |
