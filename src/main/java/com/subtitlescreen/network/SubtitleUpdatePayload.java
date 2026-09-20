@@ -1,44 +1,44 @@
 package com.subtitlescreen.network;
 
 import com.subtitlescreen.SubtitleScreenMod;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.core.BlockPos;
 
 public record SubtitleUpdatePayload(BlockPos pos, String subtitleText, String fontType, String triggerMode,
                                     int duration, String textColorHex, String playerNameColorHex)
-        implements CustomPayload {
-    public static final CustomPayload.Id<SubtitleUpdatePayload> ID =
-            new CustomPayload.Id<>(SubtitleScreenMod.id("subtitle_update"));
-    public static final PacketCodec<RegistryByteBuf, SubtitleUpdatePayload> CODEC =
-            CustomPayload.codecOf(SubtitleUpdatePayload::write, SubtitleUpdatePayload::read);
+        implements CustomPacketPayload {
+    public static final CustomPacketPayload.Id<SubtitleUpdatePayload> ID =
+            new CustomPacketPayload.Id<>(SubtitleScreenMod.id("subtitle_update"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, SubtitleUpdatePayload> CODEC =
+            CustomPacketPayload.codecOf(SubtitleUpdatePayload::write, SubtitleUpdatePayload::read);
 
-    public void write(PacketByteBuf buf) {
+    public void write(RegistryFriendlyByteBuf buf) {
         buf.writeBlockPos(pos);
-        buf.writeString(subtitleText);
-        buf.writeString(fontType);
-        buf.writeString(triggerMode);
+        buf.writeUtf(subtitleText);
+        buf.writeUtf(fontType);
+        buf.writeUtf(triggerMode);
         buf.writeInt(duration);
-        buf.writeString(textColorHex);
-        buf.writeString(playerNameColorHex);
+        buf.writeUtf(textColorHex);
+        buf.writeUtf(playerNameColorHex);
     }
 
-    public static SubtitleUpdatePayload read(PacketByteBuf buf) {
+    public static SubtitleUpdatePayload read(RegistryFriendlyByteBuf buf) {
         return new SubtitleUpdatePayload(
             buf.readBlockPos(),
-            buf.readString(),
-            buf.readString(),
-            buf.readString(),
+            buf.readUtf(),
+            buf.readUtf(),
+            buf.readUtf(),
             buf.readInt(),
-            buf.readString(),
-            buf.readString()
+            buf.readUtf(),
+            buf.readUtf()
         );
     }
 
     @Override
-    public CustomPayload.Id<? extends CustomPayload> getId() {
+    public CustomPacketPayload.Id<? extends CustomPacketPayload> getId() {
         return ID;
     }
 }

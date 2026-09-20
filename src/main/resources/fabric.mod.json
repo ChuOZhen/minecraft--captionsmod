@@ -3,7 +3,7 @@
   "id": "subtitlescreen",
   "version": "${version}",
   "name": "字幕方块",
-  "description": "一个可以在大屏上显示字幕的方块模组",
+  "description": "一个可以在大屏上显示字幕的方块模组（Minecraft 26.3）。初版由旧模型 v3.2 生成，现依据《经验.md》升级至 26.3。",
   "authors": [
     "SubTitleScreen Team"
   ],
@@ -21,9 +21,16 @@
     "subtitlescreen.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.15.11",
-    "fabric-api": ">=0.110.0+1.21.1",
-    "minecraft": "1.21.1",
-    "java": ">=21"
+    "fabricloader": ">=${loader_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=25",
+    "fabric-api-base": "*",
+    "fabric-lifecycle-events-v1": "*",
+    "fabric-networking-api-v1": "*",
+    "fabric-object-builder-api-v1": "*",
+    "fabric-item-group-api-v1": "*",
+    "fabric-screen-handler-api-v1": "*",
+    "fabric-rendering-v1": "*",
+    "fabric-command-api-v2": "*"
   }
 }

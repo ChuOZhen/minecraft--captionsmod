@@ -1,16 +1,16 @@
 package com.subtitlescreen.registry;
 
 import com.subtitlescreen.SubtitleScreenMod;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
-import net.minecraft.text.Text;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
+import net.minecraft.level.item.CreativeModeTab;
+import net.minecraft.level.item.ItemStack;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.Registry;
+import net.minecraft.network.chat.Component;
 
 public final class ModItemGroups {
-    public static final ItemGroup SUBTITLE_ITEM_GROUP = FabricItemGroup.builder()
-            .displayName(Text.translatable("itemGroup.subtitlescreen.subtitle_group"))
+    public static final CreativeModeTab SUBTITLE_ITEM_GROUP = FabricCreativeModeTab.builder()
+            .displayName(Component.translatable("itemGroup.subtitlescreen.subtitle_group"))
             .icon(() -> new ItemStack(ModBlocks.SUBTITLE_BLOCK))
             .entries((displayContext, entries) -> entries.add(ModBlocks.SUBTITLE_BLOCK))
             .build();
@@ -19,6 +19,6 @@ public final class ModItemGroups {
     }
 
     public static void register() {
-        Registry.register(Registries.ITEM_GROUP, SubtitleScreenMod.id("subtitle_group"), SUBTITLE_ITEM_GROUP);
+        Registry.register(BuiltInRegistries.ITEM_GROUP, SubtitleScreenMod.id("subtitle_group"), SUBTITLE_ITEM_GROUP);
     }
 }

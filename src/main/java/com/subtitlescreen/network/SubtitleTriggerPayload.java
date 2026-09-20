@@ -1,38 +1,38 @@
 package com.subtitlescreen.network;
 
 import com.subtitlescreen.SubtitleScreenMod;
-import net.minecraft.network.RegistryByteBuf;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.packet.CustomPayload;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 
 public record SubtitleTriggerPayload(String text, String fontType, int duration, String textColorHex,
-                                     String playerNameColorHex) implements CustomPayload {
-    public static final CustomPayload.Id<SubtitleTriggerPayload> ID =
-            new CustomPayload.Id<>(SubtitleScreenMod.id("subtitle_trigger"));
-    public static final PacketCodec<RegistryByteBuf, SubtitleTriggerPayload> CODEC =
-            CustomPayload.codecOf(SubtitleTriggerPayload::write, SubtitleTriggerPayload::read);
+                                     String playerNameColorHex) implements CustomPacketPayload {
+    public static final CustomPacketPayload.Id<SubtitleTriggerPayload> ID =
+            new CustomPacketPayload.Id<>(SubtitleScreenMod.id("subtitle_trigger"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, SubtitleTriggerPayload> CODEC =
+            CustomPacketPayload.codecOf(SubtitleTriggerPayload::write, SubtitleTriggerPayload::read);
 
-    public void write(PacketByteBuf buf) {
-        buf.writeString(text);
-        buf.writeString(fontType);
+    public void write(RegistryFriendlyByteBuf buf) {
+        buf.writeUtf(text);
+        buf.writeUtf(fontType);
         buf.writeInt(duration);
-        buf.writeString(textColorHex);
-        buf.writeString(playerNameColorHex);
+        buf.writeUtf(textColorHex);
+        buf.writeUtf(playerNameColorHex);
     }
 
-    public static SubtitleTriggerPayload read(PacketByteBuf buf) {
+    public static SubtitleTriggerPayload read(RegistryFriendlyByteBuf buf) {
         return new SubtitleTriggerPayload(
-            buf.readString(),
-            buf.readString(),
+            buf.readUtf(),
+            buf.readUtf(),
             buf.readInt(),
-            buf.readString(),
-            buf.readString()
+            buf.readUtf(),
+            buf.readUtf()
         );
     }
 
     @Override
-    public CustomPayload.Id<? extends CustomPayload> getId() {
+    public CustomPacketPayload.Id<? extends CustomPacketPayload> getId() {
         return ID;
     }
 }

@@ -5,8 +5,8 @@ import com.subtitlescreen.network.SubtitleTriggerPayload;
 import com.subtitlescreen.network.SubtitleUpdatePayload;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
 
 import java.util.Locale;
 
@@ -23,7 +23,7 @@ public final class ModPayloads {
 
         ServerPlayNetworking.registerGlobalReceiver(SubtitleUpdatePayload.ID, (payload, context) -> {
             var player = context.player();
-            var world = player.getWorld();
+            var world = player.getLevel();
             var pos = payload.pos();
 
             if (world.getBlockEntity(pos) instanceof SubtitleBlockEntity blockEntity
@@ -35,7 +35,7 @@ public final class ModPayloads {
         });
     }
 
-    public static void sendSubtitle(ServerPlayerEntity player, String text, String fontType, int duration,
+    public static void sendSubtitle(ServerPlayer player, String text, String fontType, int duration,
                                     String textColorHex, String playerNameColorHex) {
         if (!ServerPlayNetworking.canSend(player, SubtitleTriggerPayload.ID)) {
             return;
@@ -50,9 +50,9 @@ public final class ModPayloads {
         ));
     }
 
-    private static boolean canConfigure(ServerPlayerEntity player) {
-        ServerWorld world = player.getServerWorld();
-        return player.hasPermissionLevel(2) || !world.getServer().isDedicated();
+    private static boolean canConfigure(ServerPlayer player) {
+        ServerLevel world = player.getServerWorld();
+        return player.hasPermissionLevel(2) || !world.getServer().isDedicatedServer();
     }
 
     private static SubtitleUpdatePayload sanitize(SubtitleUpdatePayload payload) {

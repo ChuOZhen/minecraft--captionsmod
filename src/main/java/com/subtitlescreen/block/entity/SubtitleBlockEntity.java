@@ -3,14 +3,14 @@ package com.subtitlescreen.block.entity;
 import com.subtitlescreen.network.SubtitleUpdatePayload;
 import com.subtitlescreen.registry.ModBlockEntities;
 import com.subtitlescreen.registry.ModPayloads;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.level.level.block.state.BlockState;
+import net.minecraft.level.level.block.entity.BlockEntity;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.core.BlockPos;
 
 public class SubtitleBlockEntity extends BlockEntity {
     private static final String DEFAULT_SUBTITLE_TEXT = "欢迎, id:\"player\"";
@@ -34,7 +34,7 @@ public class SubtitleBlockEntity extends BlockEntity {
     }
     
     @Override
-    protected void writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+    protected void writeNbt(CompoundTag nbt, HolderLookup.HolderLookup registryLookup) {
         super.writeNbt(nbt, registryLookup);
         nbt.putString("subtitleText", subtitleText);
         nbt.putString("fontType", fontType);
@@ -47,7 +47,7 @@ public class SubtitleBlockEntity extends BlockEntity {
     }
     
     @Override
-    protected void readNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+    protected void readNbt(CompoundTag nbt, HolderLookup.HolderLookup registryLookup) {
         super.readNbt(nbt, registryLookup);
         subtitleText = nbt.contains("subtitleText") ? nbt.getString("subtitleText") : DEFAULT_SUBTITLE_TEXT;
         fontType = nbt.contains("fontType") ? nbt.getString("fontType") : DEFAULT_FONT_TYPE;
@@ -62,12 +62,12 @@ public class SubtitleBlockEntity extends BlockEntity {
     }
     
     @Override
-    public BlockEntityUpdateS2CPacket toUpdatePacket() {
-        return BlockEntityUpdateS2CPacket.create(this);
+    public ClientboundBlockEntityDataPacket toUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
     
     @Override
-    public NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registryLookup) {
+    public CompoundTag toInitialChunkDataNbt(HolderLookup.HolderLookup registryLookup) {
         return createNbt(registryLookup);
     }
     
@@ -81,16 +81,16 @@ public class SubtitleBlockEntity extends BlockEntity {
         markDirtyAndSync();
     }
     
-    public void triggerForPlayer(ServerPlayerEntity player) {
-        if (world instanceof ServerWorld) {
+    public void triggerForPlayer(ServerPlayer player) {
+        if (world instanceof ServerLevel) {
             String processedText = subtitleText.replace("id:\"player\"", player.getName().getString());
             ModPayloads.sendSubtitle(player, processedText, fontType, duration, textColorHex, playerNameColorHex);
         }
     }
     
     public void triggerForAllPlayers() {
-        if (world instanceof ServerWorld serverWorld) {
-            for (ServerPlayerEntity player : serverWorld.getServer().getPlayerManager().getPlayerList()) {
+        if (world instanceof ServerLevel serverWorld) {
+            for (ServerPlayer player : serverWorld.getServer().getPlayerList().getPlayerList()) {
                 String processedText = subtitleText.replace("id:\"player\"", player.getName().getString());
                 ModPayloads.sendSubtitle(player, processedText, fontType, duration, textColorHex, playerNameColorHex);
             }
@@ -168,8 +168,8 @@ public class SubtitleBlockEntity extends BlockEntity {
 
     private void markDirtyAndSync() {
         markDirty();
-        if (world instanceof ServerWorld serverWorld) {
-            serverWorld.getChunkManager().markForUpdate(pos);
+        if (world instanceof ServerLevel serverWorld) {
+            serverWorld.getChunkSource().markForUpdate(pos);
         }
     }
 

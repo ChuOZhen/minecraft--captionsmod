@@ -9,13 +9,13 @@ import com.subtitlescreen.trigger.SubtitleTriggerManager;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.Identifier;
 
 public class SubtitleScreenMod implements ModInitializer {
     public static final String MOD_ID = "subtitlescreen";
 
     public static Identifier id(String path) {
-        return Identifier.of(MOD_ID, path);
+        return Identifier.fromNamespaceAndPath(MOD_ID, path);
     }
 
     @Override

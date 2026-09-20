@@ -5,17 +5,17 @@ import com.subtitlescreen.network.SubtitleUpdatePayload;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.SliderWidget;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractSliderButton;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.level.entity.player.Inventory;
+import net.minecraft.network.chat.Component;
+import net.minecraft.core.BlockPos;
 
 @Environment(EnvType.CLIENT)
-public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
+public class SubtitleScreen extends AbstractContainerScreen<SubtitleScreenHandler> {
     private static final int TEXT_LINE_COUNT = 4;
 
     private static final String[] FONT_IDS = {"微软雅黑", "宋体", "楷体"};
@@ -41,9 +41,9 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
             new ColorOption("棕", "8B4513")
     };
 
-    private final TextFieldWidget[] subtitleFields = new TextFieldWidget[TEXT_LINE_COUNT];
-    private ButtonWidget fontButton;
-    private ButtonWidget triggerButton;
+    private final EditBox[] subtitleFields = new EditBox[TEXT_LINE_COUNT];
+    private Button fontButton;
+    private Button triggerButton;
     private DurationSliderWidget durationSlider;
 
     private int currentFontIndex = 0;
@@ -53,10 +53,10 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
     private String playerNameColorHex = "00FF00";
     private SubtitleBlockEntity blockEntity;
 
-    public SubtitleScreen(SubtitleScreenHandler handler, PlayerInventory inventory, Text title) {
+    public SubtitleScreen(SubtitleScreenHandler handler, Inventory inventory, Text title) {
         super(handler, inventory, title);
-        this.backgroundWidth = 340;
-        this.backgroundHeight = 292;
+        this.imageWidth = 340;
+        this.imageHeight = 292;
     }
 
     @Override
@@ -66,12 +66,12 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
         loadCurrentSettings();
 
         int left = this.width / 2 - 160;
-        int top = this.height / 2 - this.backgroundHeight / 2;
+        int top = this.height / 2 - this.imageHeight / 2;
         int fullWidth = 320;
 
         for (int i = 0; i < TEXT_LINE_COUNT; i++) {
-            TextFieldWidget field = new TextFieldWidget(textRenderer, left, top + 20 + i * 22, fullWidth, 20,
-                    Text.literal("字幕内容 " + (i + 1)));
+            EditBox field = new EditBox(textRenderer, left, top + 20 + i * 22, fullWidth, 20,
+                    Component.literal("字幕内容 " + (i + 1)));
             field.setMaxLength(256);
             subtitleFields[i] = field;
             addDrawableChild(field);
@@ -80,18 +80,18 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
         if (blockEntity != null) {
             String[] lines = blockEntity.getSubtitleText().split("\\R", -1);
             for (int i = 0; i < subtitleFields.length && i < lines.length; i++) {
-                subtitleFields[i].setText(lines[i]);
+                subtitleFields[i].setMessage(lines[i]);
             }
         }
 
-        fontButton = ButtonWidget.builder(Text.empty(), button -> {
+        fontButton = Button.builder(Component.empty(), button -> {
             currentFontIndex = (currentFontIndex + 1) % FONT_IDS.length;
             updateFontButton();
         }).dimensions(left, top + 113, 150, 20).build();
         updateFontButton();
         addDrawableChild(fontButton);
 
-        triggerButton = ButtonWidget.builder(Text.empty(), button -> {
+        triggerButton = Button.builder(Component.empty(), button -> {
             currentTriggerIndex = (currentTriggerIndex + 1) % TRIGGER_IDS.length;
             updateTriggerButton();
         }).dimensions(left + 170, top + 113, 150, 20).build();
@@ -104,23 +104,23 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
         addColorButtons(left, top + 170, false);
         addColorButtons(left, top + 218, true);
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("彩虹文本"), button -> textColorHex = "rainbow")
+        addDrawableChild(Button.builder(Component.literal("彩虹文本"), button -> textColorHex = "rainbow")
                 .dimensions(left + 248, top + 140, 72, 20)
                 .build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("保存"), button -> {
+        addDrawableChild(Button.builder(Component.literal("保存"), button -> {
             saveSettings();
             close();
         }).dimensions(left + 116, top + 264, 96, 20).build());
 
-        addDrawableChild(ButtonWidget.builder(Text.literal("取消"), button -> close())
+        addDrawableChild(Button.builder(Component.literal("取消"), button -> close())
                 .dimensions(left + 224, top + 264, 96, 20)
                 .build());
     }
 
     private void loadBlockEntity() {
-        if (client != null && client.world != null && handler.getPos() != null
-                && client.world.getBlockEntity(handler.getPos()) instanceof SubtitleBlockEntity entity) {
+        if (client != null && client.level != null && handler.getPos() != null
+                && client.level.getBlockEntity(handler.getPos()) instanceof SubtitleBlockEntity entity) {
             this.blockEntity = entity;
         }
     }
@@ -142,7 +142,7 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
             ColorOption option = COLOR_OPTIONS[i];
             int buttonX = left + (i % 8) * 40;
             int buttonY = y + (i / 8) * 20;
-            addDrawableChild(ButtonWidget.builder(Text.literal(option.label()), button -> {
+            addDrawableChild(Button.builder(Component.literal(option.label()), button -> {
                 if (playerNameColor) {
                     playerNameColorHex = option.hex();
                 } else {
@@ -153,11 +153,11 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
     }
 
     private void updateFontButton() {
-        fontButton.setMessage(Text.literal("字体: " + FONT_LABELS[currentFontIndex]));
+        fontButton.setMessage(Component.literal("字体: " + FONT_LABELS[currentFontIndex]));
     }
 
     private void updateTriggerButton() {
-        triggerButton.setMessage(Text.literal("触发: " + TRIGGER_LABELS[currentTriggerIndex]));
+        triggerButton.setMessage(Component.literal("触发: " + TRIGGER_LABELS[currentTriggerIndex]));
     }
 
     private void saveSettings() {
@@ -180,7 +180,7 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
     private String collectSubtitleText() {
         StringBuilder builder = new StringBuilder();
 
-        for (TextFieldWidget field : subtitleFields) {
+        for (EditBox field : subtitleFields) {
             String line = field.getText();
             if (!line.isEmpty() || builder.length() > 0) {
                 if (builder.length() > 0) {
@@ -194,17 +194,17 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
     }
 
     @Override
-    public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+    public void render(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
         renderBackground(context, mouseX, mouseY, delta);
         super.render(context, mouseX, mouseY, delta);
 
         int left = this.width / 2 - 160;
-        int top = this.height / 2 - this.backgroundHeight / 2;
+        int top = this.height / 2 - this.imageHeight / 2;
 
-        context.drawCenteredTextWithShadow(textRenderer, Text.literal("字幕方块设置"), width / 2, top + 4, 0xFFFFFF);
-        context.drawTextWithShadow(textRenderer, Text.literal("字幕内容"), left, top + 9, 0xFFFFFF);
-        context.drawTextWithShadow(textRenderer, Text.literal("普通文本颜色: " + colorLabelFor(textColorHex)), left, top + 160, 0xFFFFFF);
-        context.drawTextWithShadow(textRenderer, Text.literal("玩家名颜色: " + colorLabelFor(playerNameColorHex)), left, top + 208, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, Component.literal("字幕方块设置"), width / 2, top + 4, 0xFFFFFF);
+        context.drawTextWithShadow(textRenderer, Component.literal("字幕内容"), left, top + 9, 0xFFFFFF);
+        context.drawTextWithShadow(textRenderer, Component.literal("普通文本颜色: " + colorLabelFor(textColorHex)), left, top + 160, 0xFFFFFF);
+        context.drawTextWithShadow(textRenderer, Component.literal("玩家名颜色: " + colorLabelFor(playerNameColorHex)), left, top + 208, 0xFFFFFF);
     }
 
     @Override
@@ -213,10 +213,10 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
     }
 
     @Override
-    protected void drawBackground(DrawContext context, float delta, int mouseX, int mouseY) {
-        int left = this.width / 2 - this.backgroundWidth / 2;
-        int top = this.height / 2 - this.backgroundHeight / 2;
-        context.fill(left, top, left + this.backgroundWidth, top + this.backgroundHeight, 0xC0101010);
+    protected void drawBackground(GuiGraphicsExtractor context, float delta, int mouseX, int mouseY) {
+        int left = this.width / 2 - this.imageWidth / 2;
+        int top = this.height / 2 - this.imageHeight / 2;
+        context.fill(left, top, left + this.imageWidth, top + this.imageHeight, 0xC0101010);
     }
 
     private static int findIndex(String[] values, String value, int fallback) {
@@ -257,16 +257,16 @@ public class SubtitleScreen extends HandledScreen<SubtitleScreenHandler> {
     private record ColorOption(String label, String hex) {
     }
 
-    private class DurationSliderWidget extends SliderWidget {
+    private class DurationSliderWidget extends AbstractSliderButton {
         DurationSliderWidget(int x, int y, int width, int height, int seconds) {
-            super(x, y, width, height, Text.empty(), (Math.max(1, Math.min(10, seconds)) - 1) / 9.0);
+            super(x, y, width, height, Component.empty(), (Math.max(1, Math.min(10, seconds)) - 1) / 9.0);
             applyValue();
             updateMessage();
         }
 
         @Override
         protected void updateMessage() {
-            setMessage(Text.literal("持续时间: " + durationSeconds + " 秒"));
+            setMessage(Component.literal("持续时间: " + durationSeconds + " 秒"));
         }
 
         @Override

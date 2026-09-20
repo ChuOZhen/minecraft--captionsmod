@@ -4,10 +4,16 @@ build/
 run/
 out/
 *.class
-*.jar
 *.zip
 .DS_Store
 .idea/
 *.iml
 command.md
 plan.md
+
+# 构建必需的 jar 必须入库（初版用 *.jar 把它们一并忽略了，导致 wrapper 无法运行）
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/identity-mappings.jar
+
+# Fabric API 本地模块依赖（体积较大，按 README 说明自备）
+libs/

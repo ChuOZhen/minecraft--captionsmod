@@ -1,5 +1,5 @@
 plugins {
-    id 'fabric-loom' version '1.7-SNAPSHOT'
+    id 'fabric-loom' version '1.18.2'
     id 'maven-publish'
 }
 
@@ -11,19 +11,27 @@ base {
 }
 
 repositories {
-    mavenCentral()
-    maven { url 'https://maven.fabricmc.net/' }
-    maven { url 'https://libraries.minecraft.net/' }
-    maven { url 'https://repo.maven.apache.org/maven2/' }
+    // 无需额外仓库：Fabric API 以本地模块 jar 提供（原因见 dependencies）
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${project.minecraft_version}"
-    mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-    modImplementation "net.fabricmc:fabric-loader:${project.fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_api_version}"
+
+    // 恒等映射（identity mappings）
+    // 26.3 没有可用的 Yarn 映射（meta 接口返回空数组、官方版本清单无 client_mappings），
+    // 而本环境的 Minecraft 26.3 客户端 jar 本身即为命名版（Mojang 名），
+    // 故源码统一按 Mojang 名书写。必须是 jar 形式（内含 mappings/mappings.tiny）。
+    mappings files('gradle/identity-mappings.jar')
+
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+
+    // Fabric API：本地模块 jar，避免 Loom 改写 classTweaker 命名空间导致启动崩溃
+    implementation fileTree(dir: 'libs/fabric-api-modules', include: '*.jar')
 }
 
+// ---------------------------------------------------------------------------
+// 初版自带的两个轻量测试任务（保留）
+// ---------------------------------------------------------------------------
 tasks.register("runSubtitleRenderStateTest", JavaExec) {
     group = "verification"
     description = "Runs lightweight render state assertions."
@@ -43,32 +51,37 @@ check.dependsOn tasks.named("runSubtitleJoinSchedulerTest")
 
 processResources {
     inputs.property "version", project.version
+    inputs.property "loader_version", project.loader_version
+    inputs.property "minecraft_version", project.minecraft_version
     filteringCharset "UTF-8"
 
     filesMatching("fabric.mod.json") {
-        expand "version": project.version
+        expand(
+                "version": project.version,
+                "loader_version": project.loader_version,
+                "minecraft_version": project.minecraft_version
+        )
     }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    it.options.encoding = "UTF-8"
+    // Minecraft 26.3 要求 Java 25
+    it.options.release = 25
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(25)
     }
+    sourceCompatibility = JavaVersion.VERSION_25
+    targetCompatibility = JavaVersion.VERSION_25
     withSourcesJar()
 }
 
 jar {
     from("LICENSE") {
-        rename { "${it}_${project.base.archivesName.get()}"}
-    }
-}
-
-publishing {
-    publications {
-        create("mavenJava", MavenPublication) {
-            artifactId = project.archives_base_name
-            from components.java
-        }
+        rename { "${it}_${project.base.archivesName.get()}" }
     }
 }
 
@@ -81,4 +94,9 @@ loom {
             runDir "run"
         }
     }
+}
+
+// 恒等映射的映射树中没有 intermediary 条目，remapSourcesJar 会失败，关闭它
+tasks.matching { it.name == 'remapSourcesJar' }.configureEach {
+    enabled = false
 }
